@@ -200,27 +200,32 @@ static UIImage * _FICDStatusBarImageFromImage(UIImage *image) {
             [statusBarImage drawInRect:contextBounds];
             UIGraphicsPopContext();
         } else {
-            if ([formatName isEqualToString:FICDPhotoSquareImage32BitBGRAFormatName] == NO) {
-                // Fill with white for image formats that are opaque
-                CGContextSetFillColorWithColor(contextRef, [[UIColor whiteColor] CGColor]);
-                CGContextFillRect(contextRef, contextBounds);
-            }
+//            if ([formatName isEqualToString:FICDPhotoSquareImage32BitBGRAFormatName] == NO) {
+//                // Fill with white for image formats that are opaque
+//                CGContextSetFillColorWithColor(contextRef, [[UIColor whiteColor] CGColor]);
+//                CGContextFillRect(contextRef, contextBounds);
+//            }
             
-            UIImage *squareImage = _FICDSquareImageFromImage(image);
-            
-            // Clip to a rounded rect
-            CGPathRef path = _FICDCreateRoundedRectPath(contextBounds, 12);
-            CGContextAddPath(contextRef, path);
-            CFRelease(path);
-            CGContextEOClip(contextRef);
+//            UIImage *squareImage = _FICDSquareImageFromImage(image);
+//
+//            // Clip to a rounded rect
+//            CGPathRef path = _FICDCreateRoundedRectPath(contextBounds, 12);
+//            CGContextAddPath(contextRef, path);
+//            CFRelease(path);
+//            CGContextEOClip(contextRef);
             
             UIGraphicsPushContext(contextRef);
-            [squareImage drawInRect:contextBounds];
+            [image drawInRect:contextBounds];
             UIGraphicsPopContext();
         }
     };
     
     return drawingBlock;
+}
+
+- (CGSize)fic_imageSize
+{
+    return self.imageSize;
 }
 
 @end

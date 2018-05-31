@@ -78,6 +78,9 @@ typedef void (^FICEntityImageDrawingBlock)(CGContextRef context, CGSize contextS
  */
 - (nullable FICEntityImageDrawingBlock)fic_drawingBlockForImage:(UIImage *)image withFormatName:(NSString *)formatName;
 
+
+- (CGSize)fic_imageSize;
+
 @optional
 /**
  Returns the image for a format

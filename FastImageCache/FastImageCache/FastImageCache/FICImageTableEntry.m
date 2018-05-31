@@ -59,6 +59,26 @@
     [self _metadata]->_sourceImageUUIDBytes = sourceImageUUIDBytes;
 }
 
+- (CGSize)pixelSize
+{
+    return [self _metadata]->pixelSize;
+}
+
+- (void)setPixelSize:(CGSize)pixelSize
+{
+    [self _metadata]->pixelSize = pixelSize;
+}
+
+- (void)setImageRowLength:(NSInteger)imageRowLength
+{
+    [self _metadata]->imageRowLength = imageRowLength;
+}
+
+- (NSInteger)imageRowLength
+{
+    return [self _metadata]->imageRowLength;
+}
+
 #pragma mark - Object Lifecycle
 
 - (id)initWithImageTableChunk:(FICImageTableChunk *)imageTableChunk bytes:(void *)bytes length:(size_t)length {

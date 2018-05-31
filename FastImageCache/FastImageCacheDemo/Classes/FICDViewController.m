@@ -13,6 +13,7 @@
 #import "FICDPhoto.h"
 #import "FICDFullscreenPhotoDisplayController.h"
 #import "FICDPhotosTableViewCell.h"
+#import "TestViewController.h"
 
 #pragma mark Class Extension
 
@@ -527,7 +528,8 @@ static BOOL _FICDImageIsLight(UIImage *image) {
 #pragma mark - FICDPhotosTableViewCellDelegate
 
 - (void)photosTableViewCell:(FICDPhotosTableViewCell *)photosTableViewCell didSelectPhoto:(FICDPhoto *)photo withImageView:(UIImageView *)imageView {
-    [[FICDFullscreenPhotoDisplayController sharedDisplayController] showFullscreenPhoto:photo forImageFormatName:_imageFormatName withThumbnailImageView:imageView];
+//    [[FICDFullscreenPhotoDisplayController sharedDisplayController] showFullscreenPhoto:photo forImageFormatName:_imageFormatName withThumbnailImageView:imageView];
+    [self.navigationController pushViewController:[[TestViewController alloc] init] animated:YES];
 }
 
 #pragma mark - FICDFullscreenPhotoDisplayControllerDelegate

@@ -109,6 +109,16 @@ extern NSString *const FICImageTableScreenScaleKey;
  */
 - (void)setEntryForEntityUUID:(NSString *)entityUUID sourceImageUUID:(NSString *)sourceImageUUID imageDrawingBlock:(FICEntityImageDrawingBlock)imageDrawingBlock;
 
+- (void)cs_setEntryForEntityUUID:(NSString *)entityUUID
+                 sourceImageUUID:(NSString *)sourceImageUUID
+               imageDrawingBlock:(FICEntityImageDrawingBlock)imageDrawingBlock
+                       pixelSize:(CGSize)pixelSize;
+
+- (UIImage *)cs_newImageForEntityUUID:(NSString *)entityUUID
+                      sourceImageUUID:(NSString *)sourceImageUUID
+                          preheatData:(BOOL)preheatData;
+
+
 /**
  Returns a new image from the image entry data in the image table.
  

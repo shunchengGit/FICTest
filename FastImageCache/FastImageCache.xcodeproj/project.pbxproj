@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5C53F67D20BFCC5500D11C62 /* TestViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5C53F67C20BFCC5500D11C62 /* TestViewController.m */; };
 		B2E5676E1B316D5800906840 /* FastImageCache.h in Headers */ = {isa = PBXBuildFile; fileRef = B2E5676D1B316D5800906840 /* FastImageCache.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B2E567741B316D5800906840 /* FastImageCache.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B2E567681B316D5800906840 /* FastImageCache.framework */; };
 		B2E5677B1B316D5800906840 /* FastImageCacheTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B2E5677A1B316D5800906840 /* FastImageCacheTests.m */; };
@@ -54,6 +55,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		5C53F67B20BFCC5500D11C62 /* TestViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TestViewController.h; sourceTree = "<group>"; };
+		5C53F67C20BFCC5500D11C62 /* TestViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TestViewController.m; sourceTree = "<group>"; };
 		B2E567681B316D5800906840 /* FastImageCache.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = FastImageCache.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B2E5676C1B316D5800906840 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B2E5676D1B316D5800906840 /* FastImageCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FastImageCache.h; sourceTree = "<group>"; };
@@ -236,6 +239,8 @@
 				B2E567D71B316E1000906840 /* FICDTableView.m */,
 				B2E567D81B316E1000906840 /* FICDViewController.h */,
 				B2E567D91B316E1000906840 /* FICDViewController.m */,
+				5C53F67B20BFCC5500D11C62 /* TestViewController.h */,
+				5C53F67C20BFCC5500D11C62 /* TestViewController.m */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -411,6 +416,7 @@
 			files = (
 				B2E567DA1B316E1000906840 /* FICDAppDelegate.m in Sources */,
 				B2E567EB1B316E6600906840 /* FICImageTableChunk.m in Sources */,
+				5C53F67D20BFCC5500D11C62 /* TestViewController.m in Sources */,
 				B2E567E91B316E6600906840 /* FICImageFormat.m in Sources */,
 				B2E567AC1B316DCA00906840 /* main.m in Sources */,
 				B2E567EA1B316E6600906840 /* FICImageTable.m in Sources */,

@@ -16,6 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 typedef struct {
     CFUUIDBytes _entityUUIDBytes;
     CFUUIDBytes _sourceImageUUIDBytes;
+    CGSize pixelSize;
+    NSInteger imageRowLength;
 } FICImageTableEntryMetadata;
 
 /**
@@ -54,6 +56,10 @@ typedef struct {
  The source image UUID, in byte form, associated with the entry.
  */
 @property (nonatomic, assign) CFUUIDBytes sourceImageUUIDBytes;
+
+@property (nonatomic, assign) CGSize pixelSize;
+
+@property (nonatomic, assign) NSInteger imageRowLength;
 
 /**
  The image table chunk that contains this entry.

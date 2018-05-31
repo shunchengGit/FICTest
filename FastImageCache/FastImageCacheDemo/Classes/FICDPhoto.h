@@ -26,6 +26,8 @@ extern CGSize const FICDPhotoPixelImageSize;
 @property (nonatomic, strong, readonly) UIImage *thumbnailImage;
 @property (nonatomic, assign, readonly) BOOL thumbnailImageExists;
 
+@property (nonatomic, assign) CGSize imageSize;
+
 // Methods for demonstrating more conventional caching techniques
 - (void)generateThumbnail;
 - (void)deleteThumbnail;

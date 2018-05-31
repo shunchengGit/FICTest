@@ -343,12 +343,155 @@ static NSString *const FICImageTableFormatKey = @"format";
             } else {
                 [_lock unlock];
             }
+
+            CGColorSpaceRelease(colorSpace);
+        } else {
+            [_lock unlock];
+        }
+    }
+}
+
+- (void)cs_setEntryForEntityUUID:(NSString *)entityUUID
+                 sourceImageUUID:(NSString *)sourceImageUUID
+               imageDrawingBlock:(FICEntityImageDrawingBlock)imageDrawingBlock
+                       pixelSize:(CGSize)pixelSize
+{
+    if (entityUUID != nil && sourceImageUUID != nil && imageDrawingBlock != NULL) {
+        [_lock lock];
+        
+        NSInteger newEntryIndex = [self _indexOfEntryForEntityUUID:entityUUID];
+        if (newEntryIndex == NSNotFound) {
+            newEntryIndex = [self _nextEntryIndex];
+            
+            if (newEntryIndex >= _entryCount) {
+                // Determine how many chunks we need to support new entry index.
+                // Number of entries should always be a multiple of _entriesPerChunk
+                NSInteger numberOfEntriesRequired = newEntryIndex + 1;
+                NSInteger newChunkCount = _entriesPerChunk > 0 ? ((numberOfEntriesRequired + _entriesPerChunk - 1) / _entriesPerChunk) : 0;
+                NSInteger newEntryCount = newChunkCount * _entriesPerChunk;
+                [self _setEntryCount:newEntryCount];
+            }
+        }
+        
+        if (newEntryIndex < _entryCount) {
+            CGBitmapInfo bitmapInfo = [_imageFormat bitmapInfo];
+            CGColorSpaceRef colorSpace = [_imageFormat isGrayscale] ? CGColorSpaceCreateDeviceGray() : CGColorSpaceCreateDeviceRGB();
+            NSInteger bitsPerComponent = [_imageFormat bitsPerComponent];
+            
+            // Create context whose backing store *is* the mapped file data
+            FICImageTableEntry *entryData = [self _entryDataAtIndex:newEntryIndex];
+            if (entryData != nil) {
+                [entryData setEntityUUIDBytes:FICUUIDBytesWithString(entityUUID)];
+                [entryData setSourceImageUUIDBytes:FICUUIDBytesWithString(sourceImageUUID)];
+                
+                NSInteger bytesPerPixel = [_imageFormat bytesPerPixel];
+                NSInteger imageRowLength = (NSInteger)FICByteAlignForCoreAnimation(pixelSize.width * bytesPerPixel);
+                [entryData setPixelSize:pixelSize];
+                [entryData setImageRowLength:imageRowLength];
+                
+                // Update our book-keeping
+                [_indexMap setObject:[NSNumber numberWithUnsignedInteger:newEntryIndex] forKey:entityUUID];
+                [_occupiedIndexes addIndex:newEntryIndex];
+                [_sourceImageMap setObject:sourceImageUUID forKey:entityUUID];
+                
+                // Update MRU array
+                [self _entryWasAccessedWithEntityUUID:entityUUID];
+                [self saveMetadata];
+                
+                // Unique, unchanging pointer for this entry's index
+                NSNumber *indexNumber = [self _numberForEntryAtIndex:newEntryIndex];
+                
+                // Relinquish the image table lock before calling potentially slow imageDrawingBlock to unblock other FIC operations
+                [_lock unlock];
+                
+                CGContextRef context = CGBitmapContextCreate([entryData bytes], pixelSize.width, pixelSize.height, bitsPerComponent, imageRowLength, colorSpace, bitmapInfo);
+                
+                CGContextTranslateCTM(context, 0, pixelSize.height);
+                CGContextScaleCTM(context, _screenScale, -_screenScale);
+                
+                @synchronized(indexNumber) {
+                    // Call drawing block to allow client to draw into the context
+                    CGSize imageSize = CGSizeMake(pixelSize.width / _screenScale, pixelSize.height / _screenScale);
+                    imageDrawingBlock(context, imageSize);
+                    CGContextRelease(context);
+                    
+                    // Write the data back to the filesystem
+                    [entryData flush];
+                }
+            } else {
+                [_lock unlock];
+            }
             
             CGColorSpaceRelease(colorSpace);
         } else {
             [_lock unlock];
         }
     }
+}
+
+- (UIImage *)cs_newImageForEntityUUID:(NSString *)entityUUID
+                      sourceImageUUID:(NSString *)sourceImageUUID
+                          preheatData:(BOOL)preheatData
+{
+    UIImage *image = nil;
+    
+    if (entityUUID != nil && sourceImageUUID != nil) {
+        [_lock lock];
+        
+        FICImageTableEntry *entryData = [self _entryDataForEntityUUID:entityUUID];
+        if (entryData != nil) {
+            NSString *entryEntityUUID = FICStringWithUUIDBytes([entryData entityUUIDBytes]);
+            NSString *entrySourceImageUUID = FICStringWithUUIDBytes([entryData sourceImageUUIDBytes]);
+            BOOL entityUUIDIsCorrect = entityUUID == nil || [entityUUID caseInsensitiveCompare:entryEntityUUID] == NSOrderedSame;
+            BOOL sourceImageUUIDIsCorrect = sourceImageUUID == nil || [sourceImageUUID caseInsensitiveCompare:entrySourceImageUUID] == NSOrderedSame;
+            
+            NSNumber *indexNumber = [self _numberForEntryAtIndex:[entryData index]];
+            @synchronized(indexNumber) {
+                if (entityUUIDIsCorrect == NO || sourceImageUUIDIsCorrect == NO) {
+                    // The UUIDs don't match, so we need to invalidate the entry.
+                    [self deleteEntryForEntityUUID:entityUUID];
+                } else {
+                    [self _entryWasAccessedWithEntityUUID:entityUUID];
+                    
+                    size_t imageLength = [entryData imageRowLength] * (NSInteger)[entryData pixelSize].height;
+                    // Create CGImageRef whose backing store *is* the mapped image table entry. We avoid a memcpy this way.
+                    CGDataProviderRef dataProvider = CGDataProviderCreateWithData((__bridge_retained void *)entryData, [entryData bytes], imageLength, _FICReleaseImageData);
+                    
+                    [_inUseEntries addObject:entityUUID];
+                    __weak FICImageTable *weakSelf = self;
+                    [entryData executeBlockOnDealloc:^{
+                        [weakSelf removeInUseForEntityUUID:entityUUID];
+                    }];
+                    
+                    CGSize pixelSize = [entryData pixelSize];
+                    CGBitmapInfo bitmapInfo = [_imageFormat bitmapInfo];
+                    NSInteger bitsPerComponent = [_imageFormat bitsPerComponent];
+                    NSInteger bitsPerPixel = [_imageFormat bytesPerPixel] * 8;
+                    CGColorSpaceRef colorSpace = [_imageFormat isGrayscale] ? CGColorSpaceCreateDeviceGray() : CGColorSpaceCreateDeviceRGB();
+                    
+                    CGImageRef imageRef = CGImageCreate(pixelSize.width, pixelSize.height, bitsPerComponent, bitsPerPixel, [entryData imageRowLength], colorSpace, bitmapInfo, dataProvider, NULL, false, (CGColorRenderingIntent)0);
+                    CGDataProviderRelease(dataProvider);
+                    CGColorSpaceRelease(colorSpace);
+                    
+                    if (imageRef != NULL) {
+                        image = [[UIImage alloc] initWithCGImage:imageRef scale:_screenScale orientation:UIImageOrientationUp];
+                        CGImageRelease(imageRef);
+                    } else {
+                        NSString *message = [NSString stringWithFormat:@"*** FIC Error: %s could not create a new CGImageRef for entity UUID %@.", __PRETTY_FUNCTION__, entityUUID];
+                        [self.imageCache _logMessage:message];
+                    }
+                    
+                    if (image != nil && preheatData) {
+                        [entryData preheat];
+                    }
+                }
+            }
+        }
+        
+        [_lock unlock];
+    }
+    
+    return image;
 }
 
 - (UIImage *)newImageForEntityUUID:(NSString *)entityUUID sourceImageUUID:(NSString *)sourceImageUUID preheatData:(BOOL)preheatData {

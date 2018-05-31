@@ -170,7 +170,7 @@ static NSString *const FICImageCacheEntityKey = @"FICImageCacheEntityKey";
         imageExists = YES;
         
         dispatch_async([FICImageCache dispatchQueue], ^{
-            UIImage *image = [imageTable newImageForEntityUUID:entityUUID sourceImageUUID:sourceImageUUID preheatData:YES];
+            UIImage *image = [imageTable cs_newImageForEntityUUID:entityUUID sourceImageUUID:sourceImageUUID preheatData:YES];
             
             if (completionBlock != nil) {
                 dispatch_async(dispatch_get_main_queue(), ^{
@@ -179,7 +179,7 @@ static NSString *const FICImageCacheEntityKey = @"FICImageCacheEntityKey";
             }
         });
     } else {
-        UIImage *image = [imageTable newImageForEntityUUID:entityUUID sourceImageUUID:sourceImageUUID preheatData:NO];
+        UIImage *image = [imageTable cs_newImageForEntityUUID:entityUUID sourceImageUUID:sourceImageUUID preheatData:NO];
         imageExists = image != nil;
         
         dispatch_block_t completionBlockCallingBlock = ^{
@@ -354,10 +354,17 @@ static void _FICAddCompletionBlockForEntity(NSString *formatName, NSMutableDicti
         NSString *imageFormatName = [imageFormat name];
         FICEntityImageDrawingBlock imageDrawingBlock = [entity fic_drawingBlockForImage:image withFormatName:imageFormatName];
         
+        CGFloat scale = [UIScreen mainScreen].scale;
+//        CGSize pixelSize = CGSizeMake([entity fic_imageSize].width * scale, [entity fic_imageSize].height * scale);
+        
+        CGSize imageSize = image.size;
+        CGSize pixelSize = CGSizeMake(imageSize.width * scale / 10, imageSize.height * scale / 10);
+        
         dispatch_async([FICImageCache dispatchQueue], ^{
-            [imageTable setEntryForEntityUUID:entityUUID sourceImageUUID:sourceImageUUID imageDrawingBlock:imageDrawingBlock];
-
-            UIImage *resultImage = [imageTable newImageForEntityUUID:entityUUID sourceImageUUID:sourceImageUUID preheatData:NO];
+//            [imageTable setEntryForEntityUUID:entityUUID sourceImageUUID:sourceImageUUID imageDrawingBlock:imageDrawingBlock];
+            [imageTable cs_setEntryForEntityUUID:entityUUID sourceImageUUID:sourceImageUUID imageDrawingBlock:imageDrawingBlock pixelSize:pixelSize];
+            
+            UIImage *resultImage = [imageTable cs_newImageForEntityUUID:entityUUID sourceImageUUID:sourceImageUUID preheatData:NO];
             
             if (completionBlocks != nil) {
                 dispatch_async(dispatch_get_main_queue(), ^{
